@@ -1,0 +1,76 @@
+!@encoding CP1252
+model "graphedge"
+uses "mmxprs"; !gain access to the Xpress-Optimizer solver
+
+!optional parameters section
+parameters
+!  SAMPLEPARAM1='c:\test\'
+!  SAMPLEPARAM2=false
+   PROJECTDIR='' ! for when file is added to project
+end-parameters
+
+!sample declarations section
+declarations
+! ...
+	Seti = 1..4
+	Setj = 1..4
+	
+	x: array(Seti, Setj) of mpvar !
+	
+	w: array(Seti, Setj) of integer !
+	
+	p: array(Seti, Setj) of integer !
+	
+  Objective:linctr
+end-declarations
+
+
+w(1,1):= 3
+w(1,2):= 5
+w(2,1):= 2
+w(2,4):= 4
+w(3,1):= 4
+w(3,2):= 5
+w(4,3):= 8
+w(4,4):= 2
+
+p(1,1):= 1
+p(1,2):= 1
+p(2,1):= 1
+p(2,4):= 1
+p(3,1):= 1
+p(3,2):= 1
+p(4,3):= 1
+p(4,4):= 1
+
+
+!Objective function
+Total := sum(i in Seti, j in Setj) x(i,j)*w(i,j)
+
+
+!Constraints
+forall(i in Seti) sum(j in Setj) x(i,j) <= 1
+forall(j in Setj) sum(i in Seti) x(i,j) <= 1
+forall(i in Seti, j in Setj) p(i,j) - x(i,j) >= 0
+
+!Init variable
+forall(i in Seti, j in Setj) x(i,j) is_binary
+
+maximize(Total)
+
+if PROJECTDIR <> '' then
+  setparam('workdir', PROJECTDIR)
+  writeln("Project directory: " + PROJECTDIR)
+end-if
+
+writeln("Begin running model")
+!...
+
+writeln("OBJ funtion value: ", getobjval)
+forall(i in Seti, j in Setj) do
+	writeln(i, "to", j, ":",getsol(x(i,j)))
+end-do
+
+writeln("End running model")
+
+end-model
