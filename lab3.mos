@@ -1,0 +1,76 @@
+!@encoding CP1252
+model "graphedge"
+uses "mmxprs"; !gain access to the Xpress-Optimizer solver
+
+!optional parameters section
+parameters
+!  SAMPLEPARAM1='c:\test\'
+!  SAMPLEPARAM2=false
+   PROJECTDIR='' ! for when file is added to project
+end-parameters
+
+!sample declarations section
+declarations
+! ...
+	Nodes = 1..40
+	Colors = 1..40
+	
+	x: array(Nodes, Colors) of mpvar !
+	y: array(Colors) of mpvar !
+	
+	p: array(Nodes, Nodes) of integer !
+	
+	
+  Objective:linctr
+end-declarations
+
+
+forall(i in Nodes, j in Nodes| j<i) do
+	
+	P:=random
+	if P>0.4 then
+		p(i,j):=0
+		else
+			p(i,j):=1
+	end-if
+end-do
+
+forall(i in Nodes, j in Nodes| j>i) do
+	
+	p(i,j):=p(j,i)
+end-do
+
+
+!Objective function
+
+TOTALCOLORS := sum(c in Colors) y(c)
+
+!Constraints
+forall(i in Nodes, j in Nodes, c in Colors) p(i,j)*(x(i,c)+ x(j,c)) <= 1
+!forall(i in Nodes, j in Nodes)  p(i,j )- p(j,i) = 0
+forall(i in Nodes) sum(c in Colors) x(i,c) >= 1
+forall(c in Colors) y(c)*40 - sum(i in Nodes) x(i,c) >= 0
+!Init variable
+forall(i in Nodes, j in Nodes) x(i,j) is_binary
+forall(c in Colors) y(c) is_binary
+
+minimize(TOTALCOLORS)
+
+
+if PROJECTDIR <> '' then
+  setparam('workdir', PROJECTDIR)
+  writeln("Project directory: " + PROJECTDIR)
+end-if
+
+writeln("Begin running model")
+!...
+
+writeln("OBJ funtion value: ", getobjval)
+
+!forall(i in Seti, j in Setj) do
+!	writeln(i, "to", j, ":",getsol(x(i,j)))
+!end-do
+
+writeln("End running model")
+
+end-model
